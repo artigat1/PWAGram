@@ -1,4 +1,4 @@
-var CACHE_STATIC_NAME = 'static-v7.3';
+var CACHE_STATIC_NAME = 'static-v10.2';
 var CACHE_DYNAMIC_NAME = 'dynamic-v7.1';
 
 self.addEventListener('install', function (event) {
@@ -11,6 +11,7 @@ self.addEventListener('install', function (event) {
                 cache.addAll([
                     '/',
                     '/index.html',
+                    '/offline.html',
                     '/src/js/app.js',
                     '/src/js/feed.js',
                     '/src/js/promise.js',
@@ -33,7 +34,7 @@ self.addEventListener('activate', function (event) {
         caches.keys()
             .then(function (keyList) {
                 return Promise.all(keyList.map(function (key) {
-                    if(key !== CACHE_STATIC_NAME && key !== CACHE_DYNAMIC_NAME) {
+                    if (key !== CACHE_STATIC_NAME && key !== CACHE_DYNAMIC_NAME) {
                         console.log('[Service Worker] Removing old cache', key);
                         return caches.delete(key);
                     }
@@ -56,12 +57,16 @@ self.addEventListener('fetch', function (event) {
                         caches
                             .open(CACHE_DYNAMIC_NAME)
                             .then(function (cache) {
-                                // cache.put(event.request.url, res.clone());
+                                cache.put(event.request.url, res.clone());
                                 return res;
                             });
                     })
                     .catch(function (err) {
-
+                        return caches
+                            .open(CACHE_STATIC_NAME)
+                            .then(function (cache) {
+                                return cache.match('/offline.html');
+                            });
                     });
             })
     );
