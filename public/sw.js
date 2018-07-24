@@ -1,4 +1,4 @@
-var CACHE_STATIC_NAME = 'static-v10.2';
+var CACHE_STATIC_NAME = 'static-v10.6';
 var CACHE_DYNAMIC_NAME = 'dynamic-v7.1';
 
 self.addEventListener('install', function (event) {
@@ -44,30 +44,63 @@ self.addEventListener('activate', function (event) {
     return self.clients.claim();
 });
 
+// Cache with network fallback strategy.
+// self.addEventListener('fetch', function (event) {
+//     event.respondWith(
+//         caches.match(event.request)
+//             .then(function (response) {
+//                 if (response) {
+//                     return response;
+//                 }
+//
+//                 return fetch(event.request)
+//                     .then(function (res) {
+//                         caches
+//                             .open(CACHE_DYNAMIC_NAME)
+//                             .then(function (cache) {
+//                                 cache.put(event.request.url, res.clone());
+//                                 return res;
+//                             });
+//                     })
+//                     .catch(function (err) {
+//                         return caches
+//                             .open(CACHE_STATIC_NAME)
+//                             .then(function (cache) {
+//                                 return cache.match('/offline.html');
+//                             });
+//                     });
+//             })
+//     );
+// });
+
+// Cache only strategy
+// self.addEventListener('fetch', function (event) {
+//     event.respondWith(
+//         caches.match(event.request)
+//     );
+// });
+
+// Network only strategy
+// self.addEventListener('fetch', function (event) {
+//     event.respondWith(
+//         fetch(event.request)
+//     );
+// });
+
+// Network with cache fallback strategy.
 self.addEventListener('fetch', function (event) {
     event.respondWith(
-        caches.match(event.request)
-            .then(function (response) {
-                if (response) {
-                    return response;
-                }
-
-                return fetch(event.request)
-                    .then(function (res) {
-                        caches
-                            .open(CACHE_DYNAMIC_NAME)
-                            .then(function (cache) {
-                                cache.put(event.request.url, res.clone());
-                                return res;
-                            });
-                    })
-                    .catch(function (err) {
-                        return caches
-                            .open(CACHE_STATIC_NAME)
-                            .then(function (cache) {
-                                return cache.match('/offline.html');
-                            });
+        fetch(event.request)
+            .then(function(res) {
+                return caches
+                    .open(CACHE_DYNAMIC_NAME)
+                    .then(function (cache) {
+                        cache.put(event.request.url, res.clone());
+                        return res;
                     });
+            })
+            .catch(function(err){
+                return caches.match(event.request)
             })
     );
 });
